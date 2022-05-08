@@ -68,7 +68,7 @@ class Gui:
         if self.files_lbx.size() == 0:
             return 0
         # set the name to the entry box
-        #
+
         self.file_box.delete(0,'end')
         self.file_box.insert(0,self.files_lbx.get(self.files_lbx.curselection()))
 
