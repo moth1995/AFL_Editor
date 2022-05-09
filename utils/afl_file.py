@@ -11,7 +11,7 @@ class AFLFile(BinFile):
         self.open_file(file_location)
         if self.magic_number != self.AFL_MAGIC_NUMBER:
             raise ValueError("This is not an AFL File!")
-        self.nums_of_files = to_int(self.file_content[8:12])
+        self.nums_of_files = to_int(self.file_content[12:16])
         self.read_files_from_bytes()
 
     def from_afs(self, nums_of_files: int, file_location:str):
@@ -46,3 +46,16 @@ class AFLFile(BinFile):
             self.read_files_from_bytes()
         else:
             raise ValueError("File name can't be empty or bigger than 60 characters")
+
+    def add_file(self, quantity_of_files):
+        data = b''
+        for i in range(quantity_of_files):
+            base_bytes = bytearray([0] * self.MAX_LEN)
+            new_name = f"unnamed_{self.nums_of_files+i}.bin".encode("utf-8")
+            base_bytes[:len(new_name)] = new_name
+            data+=base_bytes
+            self.nums_of_files+=1
+        self.file_content+=data
+        self.file_content[12:16] = to_b_int32(self.nums_of_files)
+        self.size=len(self.file_content)
+        self.read_files_from_bytes()
