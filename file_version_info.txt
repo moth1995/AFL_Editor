@@ -31,12 +31,12 @@ StringFileInfo(
     u'040904B0',
     [StringStruct(u'CompanyName', u'PES Indie Team'),
     StringStruct(u'FileDescription', u'A simple tool to edit AFL files'),
-    StringStruct(u'FileVersion', u'1.0.0'),
+    StringStruct(u'FileVersion', u'1.1.0'),
     StringStruct(u'InternalName', u'AFL_Editor'),
     StringStruct(u'LegalCopyright', u'Copyright (c) PES Indie Team'),
     StringStruct(u'OriginalFilename', u'AFL Editor.exe'),
     StringStruct(u'ProductName', u'Subversion'),
-    StringStruct(u'ProductVersion', u'1.0.0 (r220507)')])
+    StringStruct(u'ProductVersion', u'1.1.0 (r220509)')])
   ]), 
 VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]
