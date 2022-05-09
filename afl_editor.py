@@ -1,12 +1,18 @@
-from email import message
-from tkinter import Button, Entry, Label, Listbox, Menu, Scrollbar, Tk, filedialog, messagebox
+from tkinter import Button, Entry, Label, Listbox, Menu, Scrollbar, Spinbox, TclError, Tk, filedialog, messagebox
 from utils.afl_file import AFLFile
 from utils.common_functions import file_read, to_int
 from utils.csv_file import CSVFile
 
 class Gui:
     appname='AFL File Editor'
+    
     def __init__(self, master:Tk):
+        """
+        Class constructor
+
+        Args:
+            master (Tk): The master object Tk represents the heritage of the whole class.
+        """
         self.master = master
         master.title(self.appname)
         w = 600 # width for the Tk root
@@ -52,37 +58,76 @@ class Gui:
         self.file_box = Entry(self.master, width=32, state='disabled')
         self.apply_btn = Button(self.master, text="Apply", state='disabled', command=self.on_apply_btn_click)
         self.clear_btn = Button(self.master, text="Clear", state='disabled', command=self.on_clear_btn_click)
+        self.quantity_of_files = Spinbox(self.master, width=5,from_=1, to=256, state='disabled')
+        self.add_more_btn = Button(self.master, text="Add more files", command=self.on_add_more_files_btn_click, state='disabled')
+        self.publish()
+
+    def publish(self):
+        """
+        Method to expose the gui into the form
+        """
 
         self.files_lbl.place(x=20, y=5)
-        self.files_sb.place(x=0, y=30, height=500)
-        self.files_lbx.place(x=17, y=30)
+        self.files_sb.place(x=303.5, y=30, height=500)
+        self.files_lbx.place(x=0, y=30)
+        
         self.file_name_lbl.place(x=350, y=30)
         self.file_box.place(x=350, y=60)
         self.apply_btn.place(x=400, y=90)
         self.clear_btn.place(x=460, y=90)
 
-        # setting scrollbar command parameter 
-        # to listbox.yview method its yview because
-        # we need to have a vertical view
+        self.quantity_of_files.place(x=420, y=150)
+        self.add_more_btn.place(x=400, y=190)
+        
+    def on_add_more_files_btn_click(self):
+        """
+        Action to add more files into the afl file and the listbox
+        """
+        files_to_add = int(self.quantity_of_files.get())
+        if not (0 < files_to_add <= 256):
+            messagebox.showerror(title=self.appname,message=f"The numbers of files to add must be between 0 and 256")
+            return 0
+        self.afl_file.add_file(files_to_add)
+        self.reload_gui_items()
+        
     def on_file_selected(self):
+        """
+        Action to load the selected file text from the listbox into the entry text widget.
+        """
         if self.files_lbx.size() == 0:
             return 0
         # set the name to the entry box
-
         self.file_box.delete(0,'end')
         self.file_box.insert(0,self.files_lbx.get(self.files_lbx.curselection()))
 
     def on_apply_btn_click(self):
-        file_idx = self.files_lbx.get(0, "end").index(self.files_lbx.get(self.files_lbx.curselection()))
-        self.afl_file.set_name(file_idx,self.file_box.get())
-        self.reload_gui_items(file_idx)
+        """
+        Handler to clic event on apply button
+        """
+        try:
+            file_idx = self.files_lbx.get(0, "end").index(self.files_lbx.get(self.files_lbx.curselection()))
+            self.afl_file.set_name(file_idx,self.file_box.get())
+            self.reload_gui_items(file_idx)
+        except TclError as e:
+            messagebox.showerror(title=self.appname, message=f'You must select one item before clic here \n{e}')
 
     def on_clear_btn_click(self):
+        """
+        Handler to clic event on clear button
+        """
         self.file_box.delete(0,'end')
+        self.files_lbx.selection_clear(0, 'end')
 
     def open_afl(self):
+        """
+        Shows the user an interactive menu to select their afl file and then update the whole gui
+        enabling widgets
+
+        Returns:
+            Bolean: Returns False if the user hits the "cancel" button, otherwise does their actions
+        """
         filetypes = [
-            ('text files', '*.AFL'),
+            ('AFÑ files', '*.AFL'),
             ('All files', '*.*')
         ]
 
@@ -96,7 +141,13 @@ class Gui:
         self.afl_file.from_afl(filename)
         self.reload_gui_items()
 
-    def reload_gui_items(self,item_idx=None):
+    def reload_gui_items(self,item_idx = None):
+        """
+        Refresh the whole gui once there's an update in one of the elements such as a new afl file or any file name change, etc
+
+        Args:
+            item_idx (int, optional): optional parameter, in case you need to keep the current selection on the listbox after the update
+        """
         self.file_menu.entryconfig("Save", state="normal")
         self.file_menu.entryconfig("Save as...", state="normal")
         self.edit_menu.entryconfig("Export to CSV", state="normal")
@@ -106,6 +157,8 @@ class Gui:
         self.file_box.config(state='normal')
         self.apply_btn.config(state='normal')
         self.clear_btn.config(state='normal')
+        self.quantity_of_files.config(state='normal')
+        self.add_more_btn.config(state='normal')
         if item_idx!=None:
             # After we clic on the button we lost the item selection so with this we solve it
             self.files_lbx.select_set(item_idx)
@@ -129,7 +182,7 @@ class Gui:
 
     def create_afl_from_afs(self):
         filetypes = [
-            ('text files', '*.afs'),
+            ('AFS files', '*.afs'),
             ('All files', '*.*')
         ]
 
@@ -160,7 +213,7 @@ class Gui:
 
     def import_from_csv(self):
         filetypes = [
-            ('text files', '*.csv'),
+            ('CSV files', '*.csv'),
             ('All files', '*.*')
         ]
 
@@ -172,6 +225,10 @@ class Gui:
             return 0
         csv_file = CSVFile(filename)
         csv_file_content = csv_file.load()
+        nums_of_files = len(csv_file_content)
+        if nums_of_files > self.afl_file.nums_of_files:
+            messagebox.showwarning(tittle=self.appname, message=f'There are more lines than files in your AFL file')
+            return 0
         for line in csv_file_content:
             self.afl_file.set_name(int(line[0]),line[1])
         self.reload_gui_items()
@@ -181,11 +238,15 @@ class Gui:
         """
         First of all thanks to Obocaman who created GGS and also AFL files to make it easier to us create maps for our AFS files.
 
-        This is just a simple tool to edit the binary file and to map our stuff better, in future versions you will be able to:
+        Change log:
+        v1.1 2022-05-09
+        New:
         - Export as CSV
         - Import from CSV
         - Create an AFL file from a AFS file
         - Add more files into an existent AFL file
+        v1.0 2022-05-07
+        - Initial version, open, edit and save .afl files
         """.replace('        ', ''))
 
     def manual(self):
