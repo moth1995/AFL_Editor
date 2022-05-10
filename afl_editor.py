@@ -245,6 +245,8 @@ class Gui:
         - Import from CSV
         - Create an AFL file from a AFS file
         - Add more files into an existent AFL file
+        Bugfix:
+        -Compatibility with Windows Vista & 7
         v1.0 2022-05-07
         - Initial version, open, edit and save .afl files
         """.replace('        ', ''))
