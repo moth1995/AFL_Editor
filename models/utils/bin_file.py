@@ -1,4 +1,4 @@
-from utils.common_functions import file_read
+from .common_functions import file_read
 
 
 class BinFile:
