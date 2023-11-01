@@ -2,33 +2,31 @@ from tkinter import Button, Entry, Label, Listbox, Menu, Scrollbar, Spinbox, Tcl
 from utils.afl_file import AFLFile
 from utils.common_functions import file_read, to_int
 from utils.csv_file import CSVFile
+import traceback
 
-class Gui:
+class Gui(Tk):
     appname='AFL File Editor'
-    
-    def __init__(self, master:Tk):
+    def __init__(self):
         """
         Class constructor
-
-        Args:
-            master (Tk): The master object Tk represents the heritage of the whole class.
         """
-        self.master = master
-        master.title(self.appname)
+        super().__init__()
+        self.title(self.appname)
+        #self.report_callback_exception = report_callback_exception
         w = 600 # width for the Tk root
         h = 530 # height for the Tk root
         # get screen width and height
-        ws = master.winfo_screenwidth() # width of the screen
-        hs = master.winfo_screenheight() # height of the screen
+        ws = self.winfo_screenwidth() # width of the screen
+        hs = self.winfo_screenheight() # height of the screen
         # calculate x and y coordinates for the Tk root window
         x = (ws/2) - (w/2)
         y = (hs/2) - (h/2)
         # set the dimensions of the screen 
         # and where it is placed
-        master.geometry('%dx%d+%d+%d' % (w, h, x, y))
+        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
 
-        self.my_menu=Menu(self.master)
-        master.config(menu=self.my_menu)
+        self.my_menu=Menu(self)
+        self.config(menu=self.my_menu)
         self.file_menu = Menu(self.my_menu, tearoff=0)
         self.edit_menu = Menu(self.my_menu, tearoff=0)
         self.help_menu = Menu(self.my_menu, tearoff=0)
@@ -37,7 +35,7 @@ class Gui:
         self.file_menu.add_command(label="Open", command=self.open_afl)
         self.file_menu.add_command(label="Save", state='disabled',command=self.save_btn_action)
         self.file_menu.add_command(label="Save as...", state='disabled', command=self.save_as_btn_action)
-        self.file_menu.add_command(label="Exit", command=self.master.quit)
+        self.file_menu.add_command(label="Exit", command=self.quit)
 
         self.my_menu.add_cascade(label="Edit", menu=self.edit_menu)
         self.edit_menu.add_command(label="Create AFL from AFS", command=self.create_afl_from_afs)
@@ -48,19 +46,27 @@ class Gui:
         self.help_menu.add_command(label="Manual", command=self.manual)
         self.help_menu.add_command(label="About", command=self.about)
 
-        self.files_lbl = Label(self.master, text="File list")
-        self.files_lbx = Listbox(self.master, height = 31, width = 50, exportselection=False)
-        self.files_sb = Scrollbar(self.master, orient="vertical") 
+        self.files_lbl = Label(self, text="File list")
+        self.files_lbx = Listbox(self, height = 31, width = 50, exportselection=False)
+        self.files_sb = Scrollbar(self, orient="vertical") 
         self.files_sb.config(command = self.files_lbx.yview)
         self.files_lbx.config(yscrollcommand = self.files_sb.set)
         self.files_lbx.bind('<<ListboxSelect>>',lambda event: self.on_file_selected())
-        self.file_name_lbl = Label(self.master,text="New file name")
-        self.file_box = Entry(self.master, width=32, state='disabled')
-        self.apply_btn = Button(self.master, text="Apply", state='disabled', command=self.on_apply_btn_click)
-        self.clear_btn = Button(self.master, text="Clear", state='disabled', command=self.on_clear_btn_click)
-        self.quantity_of_files = Spinbox(self.master, width=5,from_=1, to=256, state='disabled')
-        self.add_more_btn = Button(self.master, text="Add more files", command=self.on_add_more_files_btn_click, state='disabled')
+        self.file_name_lbl = Label(self,text="New file name")
+        self.file_box = Entry(self, width=32, state='disabled')
+        self.apply_btn = Button(self, text="Apply", state='disabled', command=self.on_apply_btn_click)
+        self.clear_btn = Button(self, text="Clear", state='disabled', command=self.on_clear_btn_click)
+        self.quantity_of_files = Spinbox(self, width=5,from_=1, to=256, state='disabled')
+        self.add_more_btn = Button(self, text="Add more files", command=self.on_add_more_files_btn_click, state='disabled')
+        self.file_box.bind("<Return>",lambda e: self.on_apply_btn_click())
         self.publish()
+
+    def report_callback_exception(self, exc, val, tb):
+        err = "".join(traceback.format_exception(exc, val, tb))
+        messagebox.showerror(
+            title = f"{self.appname} Error Message", 
+            message = f"Error type: {val}\n\nDetail Error:\n{err}"
+        )
 
     def publish(self):
         """
@@ -108,6 +114,7 @@ class Gui:
             file_idx = self.files_lbx.get(0, "end").index(self.files_lbx.get(self.files_lbx.curselection()))
             self.afl_file.set_name(file_idx,self.file_box.get())
             self.reload_gui_items(file_idx)
+            self.files_lbx.see(file_idx)
         except TclError as e:
             messagebox.showerror(title=self.appname, message=f'You must select one item before clic here \n{e}')
 
@@ -227,11 +234,12 @@ class Gui:
         csv_file_content = csv_file.load()
         nums_of_files = len(csv_file_content)
         if nums_of_files > self.afl_file.nums_of_files:
-            messagebox.showwarning(tittle=self.appname, message=f'There are more lines than files in your AFL file')
+            messagebox.showwarning(title=self.appname, message=f'There are more lines than files in your AFL file')
             return 0
         for line in csv_file_content:
             self.afl_file.set_name(int(line[0]),line[1])
         self.reload_gui_items()
+        messagebox.showinfo(title=self.appname, message="CSV file imported succefully")
 
     def about(self):
         messagebox.showinfo(title=self.appname,message=
@@ -275,11 +283,12 @@ class Gui:
         """.replace('        ', ''))
 
     def start(self):
-        self.master.resizable(False, False)
-        self.master.mainloop()
+        self.resizable(False, False)
+        self.mainloop()
 
 def main():
-    Gui(Tk()).start()
+    app = Gui()
+    app.start()
 
 if __name__ == "__main__":
     main()

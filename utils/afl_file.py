@@ -45,7 +45,9 @@ class AFLFile(BinFile):
                 self.file_content[self.HEADER_SIZE + (file_idx * self.MAX_LEN) + i] = byte
             self.read_files_from_bytes()
         else:
-            raise ValueError("File name can't be empty or bigger than 60 characters")
+            raise ValueError(
+                f"File name can't be empty or bigger than {self.MAX_LEN} characters {new_name} on file ID: {file_idx}"
+            )
 
     def add_file(self, quantity_of_files):
         data = b''
